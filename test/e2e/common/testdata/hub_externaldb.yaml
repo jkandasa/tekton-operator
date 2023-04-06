@@ -15,7 +15,7 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: db
+  name: hub-external-db
   labels:
     pod-security.kubernetes.io/enforce: restricted
 spec: {}
@@ -24,7 +24,7 @@ spec: {}
 apiVersion: v1
 kind: Secret
 metadata:
-  namespace: db
+  namespace: hub-external-db
   name: tekton-hub-db
   labels:
     app: tekton-hub-db
@@ -40,7 +40,7 @@ stringData:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  namespace: db
+  namespace: hub-external-db
   name: tekton-hub-db
   labels:
     app: tekton-hub-db
@@ -55,7 +55,7 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  namespace: db
+  namespace: hub-external-db
   name: tekton-hub-db
   labels:
     app: tekton-hub-db
@@ -137,7 +137,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  namespace: db
+  namespace: hub-external-db
   name: tekton-hub-db
   labels:
     app: tekton-hub-db
