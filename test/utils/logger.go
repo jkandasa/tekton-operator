@@ -44,5 +44,7 @@ func Logger() *zap.SugaredLogger {
 		return zap.NewNop().Sugar()
 	}
 
+	// do not print stacktrace on warn level
+	logger = logger.WithOptions(zap.AddStacktrace(zap.ErrorLevel))
 	return logger.Sugar()
 }

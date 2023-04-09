@@ -93,7 +93,7 @@ func NewTektonHubTestSuite(t *testing.T) *TektonHubTestSuite {
 
 // before suite
 func (s *TektonHubTestSuite) SetupSuite() {
-	resources.PrintClusterInformation(s.logger)
+	resources.PrintClusterInformation(s.logger, s.resourceNames)
 }
 
 // after suite
@@ -368,26 +368,25 @@ func (s *TektonHubTestSuite) undeployExternalDatabase() {
 // in openshift can not run with fsGroup: 65532 and runAsUser: 65532
 // remove those fields from yaml configuration and continue
 func (s *TektonHubTestSuite) externalDatabaseTransformer(u *unstructured.Unstructured) error {
-	if !utils.IsOpenShift() {
-		return nil
-	}
-	if u.GetKind() == "Deployment" && u.GetName() == "tekton-hub-db" {
-		// removes, spec.template.spec.securityContext.fsGroup: 65532
-		unstructured.RemoveNestedField(u.Object, "spec", "template", "spec", "securityContext", "fsGroup")
-		containers, _, err := unstructured.NestedSlice(u.Object, "spec", "template", "spec", "containers")
-		if err != nil {
-			return err
+	if utils.IsOpenShift() {
+		if u.GetKind() == "Deployment" && u.GetName() == "tekton-hub-db" {
+			// removes, spec.template.spec.securityContext.fsGroup: 65532
+			unstructured.RemoveNestedField(u.Object, "spec", "template", "spec", "securityContext", "fsGroup")
+			containers, _, err := unstructured.NestedSlice(u.Object, "spec", "template", "spec", "containers")
+			if err != nil {
+				return err
+			}
+			for _, c := range containers {
+				// removes, spec.template.spec.containers[*].securityContext.runAsUser: 65532
+				unstructured.RemoveNestedField(c.(map[string]interface{}), "securityContext", "runAsUser")
+			}
+			// update containers
+			if err := unstructured.SetNestedField(u.Object, containers, "spec", "template", "spec", "containers"); err != nil {
+				return err
+			}
+		} else if utils.IsOpenShift() && u.GetKind() == "Secret" && u.GetNamespace() == "tekton-pipelines" {
+			u.SetNamespace(s.resourceNames.TargetNamespace)
 		}
-		for _, c := range containers {
-			// removes, spec.template.spec.containers[*].securityContext.runAsUser: 65532
-			unstructured.RemoveNestedField(c.(map[string]interface{}), "securityContext", "runAsUser")
-		}
-		// update containers
-		if err := unstructured.SetNestedField(u.Object, containers, "spec", "template", "spec", "containers"); err != nil {
-			return err
-		}
-	} else if utils.IsOpenShift() && u.GetKind() == "Secret" && u.GetNamespace() == "tekton-pipelines" {
-		u.SetNamespace(s.resourceNames.TargetNamespace)
 	}
 	return nil
 }

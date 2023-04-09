@@ -24,23 +24,27 @@ import (
 const (
 	// log level of the logger used in e2e tests
 	ENV_LOG_LEVEL = "LOG_LEVEL"
+	ENV_TARGET    = "TARGET"
+	ENV_PLATFORM  = "PLATFORM"
+
+	// os/architecture types
+	LinuxPPC64LE = "linux/ppc64le"
+	LinuxS390X   = "linux/s390x"
 )
-
-var (
-	isOpenShift = false
-)
-
-func init() {
-	isOpenShift = strings.ToLower(os.Getenv("TARGET")) == "openshift"
-}
-
-func IsOpenShift() bool {
-	return isOpenShift
-}
 
 func GetEnvironment(key, defaultValue string) string {
 	if value := os.Getenv(key); value != "" {
 		return value
 	}
 	return defaultValue
+}
+
+// in the development package "PLATFORM" is used to know about cluster environment, ie: OpenShift or kubernetes (v1alpha1.IsOpenShiftPlatform())
+// but in test uses "TARGET" is used for the same and "PLATFORM" refers os/arch in tests
+func IsOpenShift() bool {
+	return strings.ToLower(os.Getenv(ENV_TARGET)) == "openshift"
+}
+
+func GetOSAndArchitecture() string {
+	return os.Getenv(ENV_PLATFORM)
 }

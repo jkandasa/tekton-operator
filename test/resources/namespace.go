@@ -56,6 +56,17 @@ func CreateNamespace(kubeClient kubernetes.Interface, namespace string) error {
 	return err
 }
 
+func DeleteNamespace(kubeClient kubernetes.Interface, namespace string) error {
+	err := kubeClient.CoreV1().Namespaces().Delete(context.TODO(), namespace, metav1.DeleteOptions{})
+	if err != nil {
+		if apierrs.IsNotFound(err) {
+			return nil
+		}
+		return err
+	}
+	return nil
+}
+
 func DeleteNamespaceAndWait(kubeClient kubernetes.Interface, namespace string, interval, timeout time.Duration) error {
 	err := kubeClient.CoreV1().Namespaces().Delete(context.TODO(), namespace, metav1.DeleteOptions{})
 	if err != nil {

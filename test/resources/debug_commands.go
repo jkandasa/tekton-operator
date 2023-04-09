@@ -61,13 +61,21 @@ func ExecuteDebugCommands(logger *zap.SugaredLogger, resourceNames utils.Resourc
 	RunCommand(logger, "------------------- debug information -------------------", commands)
 }
 
-func PrintClusterInformation(logger *zap.SugaredLogger) {
+func PrintClusterInformation(logger *zap.SugaredLogger, resourceNames utils.ResourceNames) {
 	printClusterInformation.Do(func() {
 		commands := []string{
 			"kubectl version --output=yaml",
 			"kubectl get nodes --output=wide",
 		}
-		title := "------------- cluster version information ---------------"
+		platform := "kubernetes"
+		if utils.IsOpenShift() {
+			platform = "OpenShift"
+			openshiftCommands := []string{
+				fmt.Sprintf("kubectl get ClusterServiceVersion --namespace=%s", resourceNames.Namespace),
+			}
+			commands = append(commands, openshiftCommands...)
+		}
+		title := fmt.Sprintf("------------- cluster version information (%s) ---------------", platform)
 		RunCommand(logger, title, commands)
 	})
 }
