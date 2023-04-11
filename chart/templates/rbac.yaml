@@ -212,16 +212,6 @@ rules:
   - patch
   - watch
 - apiGroups:
-  - policy
-  resources:
-  - podsecuritypolicies
-  verbs:
-  - get
-  - create
-  - update
-  - delete
-  - use
-- apiGroups:
   - operator.tekton.dev
   resources:
   - '*'
@@ -414,6 +404,7 @@ rules:
 - apiGroups:
     - extensions
     - apps
+    - networking.k8s.io
   resources:
     - ingresses
     - ingresses/status
@@ -566,16 +557,6 @@ rules:
     - patch
     - watch
 - apiGroups:
-    - policy
-  resources:
-    - podsecuritypolicies
-  verbs:
-    - get
-    - create
-    - update
-    - delete
-    - use
-- apiGroups:
     - operator.tekton.dev
   resources:
     - '*'
@@ -610,6 +591,9 @@ rules:
     - runs
     - runs/status
     - runs/finalizers
+    - customruns
+    - customruns/status
+    - customruns/finalizers
   verbs:
     - get
     - list
@@ -712,6 +696,7 @@ rules:
     - batch
   resources:
     - cronjobs
+    - jobs
   verbs:
     - delete
     - create
@@ -759,18 +744,18 @@ rules:
     - update
     - watch
 - apiGroups:
-  - resolution.tekton.dev
+    - resolution.tekton.dev
   resources:
-  - resolutionrequests
-  - resolutionrequests/status
+    - resolutionrequests
+    - resolutionrequests/status
   verbs:
-  - get
-  - list
-  - watch
-  - create
-  - delete
-  - update
-  - patch
+    - get
+    - list
+    - watch
+    - create
+    - delete
+    - update
+    - patch
 {{- end }}
 
 ---
