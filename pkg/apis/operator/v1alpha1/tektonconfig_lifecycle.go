@@ -107,3 +107,19 @@ func (tcs *TektonConfigStatus) GetVersion() string {
 func (tcs *TektonConfigStatus) SetVersion(version string) {
 	tcs.Version = version
 }
+
+// returns last applied upgrade version
+func (tcs *TektonConfigStatus) GetLastAppliedUpgradeVersion() string {
+	if tcs.Annotations == nil {
+		return ""
+	}
+	return tcs.Annotations[LastAppliedUpgradeKey]
+}
+
+// updates last applied upgrade version
+func (tcs *TektonConfigStatus) SetLastAppliedUpgradeVersion(lastAppliedUpgradeVersion string) {
+	if tcs.Annotations == nil {
+		tcs.Annotations = map[string]string{}
+	}
+	tcs.Annotations[LastAppliedUpgradeKey] = lastAppliedUpgradeVersion
+}

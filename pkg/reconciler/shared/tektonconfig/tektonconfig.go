@@ -29,9 +29,9 @@ import (
 	"github.com/tektoncd/operator/pkg/reconciler/shared/tektonconfig/chain"
 	"github.com/tektoncd/operator/pkg/reconciler/shared/tektonconfig/pipeline"
 	"github.com/tektoncd/operator/pkg/reconciler/shared/tektonconfig/trigger"
+	"github.com/tektoncd/operator/upgrade"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"knative.dev/pkg/logging"
 	pkgreconciler "knative.dev/pkg/reconciler"
@@ -99,6 +99,12 @@ func (r *Reconciler) ReconcileKind(ctx context.Context, tc *v1alpha1.TektonConfi
 	logger := logging.FromContext(ctx)
 	tc.Status.InitializeConditions()
 	tc.Status.SetVersion(r.operatorVersion)
+
+	// if there is not lastAppliedUpgradeVersion defined, assumes this is fresh installation,
+	// and updates the lastAppliedUpgradeVersion to most recent to avoid run upgrade patches on fresh installation
+	if tc.Status.GetLastAppliedUpgradeVersion() == "" {
+		tc.Status.SetLastAppliedUpgradeVersion(upgrade.GetLatestUpgradeVersion().String())
+	}
 
 	logger.Infow("Reconciling TektonConfig", "status", tc.Status)
 	if tc.GetName() != v1alpha1.ConfigResourceName {
@@ -193,7 +199,7 @@ func (r *Reconciler) ReconcileKind(ctx context.Context, tc *v1alpha1.TektonConfi
 	tc.Status.MarkPostInstallComplete()
 
 	// Update the object for any spec changes
-	if _, err := r.operatorClientSet.OperatorV1alpha1().TektonConfigs().Update(ctx, tc, v1.UpdateOptions{}); err != nil {
+	if _, err := r.operatorClientSet.OperatorV1alpha1().TektonConfigs().Update(ctx, tc, metav1.UpdateOptions{}); err != nil {
 		return err
 	}
 
@@ -241,7 +247,7 @@ func (r *Reconciler) markUpgrade(ctx context.Context, tc *v1alpha1.TektonConfig)
 
 	// Update the object for any spec changes
 	if _, err := r.operatorClientSet.OperatorV1alpha1().TektonConfigs().Update(ctx,
-		tc, v1.UpdateOptions{}); err != nil {
+		tc, metav1.UpdateOptions{}); err != nil {
 		return err
 	}
 	return v1alpha1.RECONCILE_AGAIN_ERR
