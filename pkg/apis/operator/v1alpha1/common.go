@@ -45,6 +45,7 @@ type TektonComponent interface {
 type TektonComponentSpec interface {
 	// GetTargetNamespace gets the version to be installed
 	GetTargetNamespace() string
+	GetTargetNamespaceMetadata() *NamespaceMetadata
 }
 
 // TektonComponentStatus is a common interface for status mutations of all known types.
@@ -72,12 +73,23 @@ type TektonComponentStatus interface {
 type CommonSpec struct {
 	// TargetNamespace is where resources will be installed
 	// +optional
-	TargetNamespace string `json:"targetNamespace,omitempty"`
+	TargetNamespace         string             `json:"targetNamespace,omitempty"`
+	TargetNamespaceMetadata *NamespaceMetadata `json:"targetNamespaceMetadata,omitempty"`
+}
+
+type NamespaceMetadata struct {
+	Labels      map[string]string `json:"labels,omitempty"`
+	Annotations map[string]string `json:"annotations,omitempty"`
 }
 
 // GetTargetNamespace implements KComponentSpec.
 func (c *CommonSpec) GetTargetNamespace() string {
 	return c.TargetNamespace
+}
+
+// GetNamespaceMetadata implements TektonComponentSpec
+func (c *CommonSpec) GetTargetNamespaceMetadata() *NamespaceMetadata {
+	return c.TargetNamespaceMetadata
 }
 
 // Param declares an string value to use for the parameter called name.

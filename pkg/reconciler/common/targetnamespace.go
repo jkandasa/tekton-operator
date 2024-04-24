@@ -102,10 +102,33 @@ func ReconcileTargetNamespace(ctx context.Context, labels map[string]string, tek
 	if labels == nil {
 		labels = map[string]string{}
 	}
+
+	annotations := map[string]string{}
+
+	// include labels and annotations from targetNamespaceMetadata
+	if tektonComponent.GetSpec().GetTargetNamespaceMetadata() != nil {
+		if len(tektonComponent.GetSpec().GetTargetNamespaceMetadata().Labels) > 0 {
+			for lk, lv := range tektonComponent.GetSpec().GetTargetNamespaceMetadata().Labels {
+				labels[lk] = lv
+			}
+		}
+		if len(tektonComponent.GetSpec().GetTargetNamespaceMetadata().Annotations) > 0 {
+			annotations = tektonComponent.GetSpec().GetTargetNamespaceMetadata().Annotations
+		}
+	}
+
 	labels[labelKeyTargetNamespace] = "true" // include target namespace label
 
 	// if a namespace found, update the required fields
 	if targetNamespace != nil {
+		// initialize labels and annotations
+		if targetNamespace.Labels == nil {
+			targetNamespace.Labels = map[string]string{}
+		}
+		if targetNamespace.Annotations == nil {
+			targetNamespace.Annotations = map[string]string{}
+		}
+
 		// verify the existing namespace has the required fields, if not update
 		updateRequired := false
 
@@ -116,20 +139,33 @@ func ReconcileTargetNamespace(ctx context.Context, labels map[string]string, tek
 		}
 
 		// update labels
-		for expectedLabelKey, expectedLabelValue := range labels {
-			expectedLabelFound := false
-			for actualLabelKey, actualLabelValue := range targetNamespace.GetLabels() {
-				if expectedLabelKey == actualLabelKey && expectedLabelValue == actualLabelValue {
-					expectedLabelFound = true
+		for expectedKey, expectedValue := range labels {
+			found := false
+			for actualKey, actualValue := range targetNamespace.GetLabels() {
+				if expectedKey == actualKey && expectedValue == actualValue {
+					found = true
 					break
 				}
 			}
 			// update label if not found
-			if !expectedLabelFound {
-				if targetNamespace.Labels == nil {
-					targetNamespace.Labels = map[string]string{}
+			if !found {
+				targetNamespace.Labels[expectedKey] = expectedValue
+				updateRequired = true
+			}
+		}
+
+		// include annotations from targetNamespaceMetadata
+		for expectedKey, expectedValue := range annotations {
+			found := false
+			for actualKey, actualValue := range targetNamespace.GetAnnotations() {
+				if expectedKey == actualKey && expectedValue == actualValue {
+					found = true
+					break
 				}
-				targetNamespace.Labels[expectedLabelKey] = expectedLabelValue
+			}
+			// update annotation if not found
+			if !found {
+				targetNamespace.Annotations[expectedKey] = expectedValue
 				updateRequired = true
 			}
 		}
@@ -152,6 +188,7 @@ func ReconcileTargetNamespace(ctx context.Context, labels map[string]string, tek
 			ObjectMeta: metav1.ObjectMeta{
 				Name:            tektonComponent.GetSpec().GetTargetNamespace(),
 				Labels:          labels,
+				Annotations:     annotations,
 				OwnerReferences: []metav1.OwnerReference{ownerRef},
 			},
 		}
