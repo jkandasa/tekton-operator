@@ -22,8 +22,8 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"sync"
 
-	pacConfigutil "github.com/openshift-pipelines/pipelines-as-code/pkg/configutil"
 	pacSettings "github.com/openshift-pipelines/pipelines-as-code/pkg/params/settings"
 	"go.uber.org/zap"
 	"knative.dev/pkg/logging"
@@ -46,11 +46,11 @@ func (set *PACSettings) setPACDefaults(logger *zap.SugaredLogger) {
 		set.Settings = map[string]string{}
 	}
 	defaultPacSettings := pacSettings.DefaultSettings()
-	err := pacConfigutil.ValidateAndAssignValues(logger, set.Settings, &defaultPacSettings, nil, false)
+	err := pacSettings.SyncConfig(logger, &defaultPacSettings, set.Settings)
 	if err != nil {
 		logger.Error("error on applying default PAC settings", err)
 	}
-	set.Settings = StructToMap(&defaultPacSettings)
+	set.Settings = ConvertPacStructToConfigMap(&defaultPacSettings)
 	setAdditionalPACControllerDefault(set.AdditionalPACControllers)
 }
 
@@ -70,7 +70,7 @@ func setAdditionalPACControllerDefault(additionalPACController map[string]Additi
 	}
 }
 
-func StructToMap(settings *pacSettings.Settings) map[string]string {
+func ConvertPacStructToConfigMap(settings *pacSettings.Settings) map[string]string {
 	structValue := reflect.ValueOf(settings).Elem()
 	structType := reflect.TypeOf(settings).Elem()
 	config := map[string]string{}
@@ -80,8 +80,7 @@ func StructToMap(settings *pacSettings.Settings) map[string]string {
 		fieldName := field.Name
 
 		jsonTag := field.Tag.Get("json")
-		// Skip field which doesn't have json tag
-		if jsonTag == "" || jsonTag == "-" {
+		if jsonTag == "-" {
 			continue
 		}
 		key := strings.ToLower(jsonTag)
@@ -102,6 +101,25 @@ func StructToMap(settings *pacSettings.Settings) map[string]string {
 				continue
 			}
 			config[key] = strconv.FormatInt(element.Int(), 10)
+		case reflect.Ptr:
+			if key == "" {
+				data := element.Interface().(*sync.Map)
+				index := 1
+				prefix := "catalog-"
+				data.Range(func(key, value interface{}) bool {
+					catalogData := value.(pacSettings.HubCatalog)
+					if key == "default" {
+						config[pacSettings.HubURLKey] = catalogData.URL
+						config[pacSettings.HubCatalogNameKey] = catalogData.Name
+						return true
+					}
+					config[fmt.Sprintf("%s%d-%s", prefix, index, "id")] = catalogData.ID
+					config[fmt.Sprintf("%s%d-%s", prefix, index, "name")] = catalogData.Name
+					config[fmt.Sprintf("%s%d-%s", prefix, index, "url")] = catalogData.URL
+					index++
+					return true
+				})
+			}
 		default:
 			// Skip unsupported field types
 			continue

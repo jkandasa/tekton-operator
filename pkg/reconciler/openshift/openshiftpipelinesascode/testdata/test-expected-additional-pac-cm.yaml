@@ -119,6 +119,7 @@ data:
   #
   custom-console-name: ""
   custom-console-url: ""
+  custom-console-url-namespace: ""
   custom-console-url-pr-details: ""
   custom-console-url-pr-tasklog: ""
 
