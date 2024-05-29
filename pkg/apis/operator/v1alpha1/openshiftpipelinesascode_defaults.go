@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -101,25 +102,49 @@ func ConvertPacStructToConfigMap(settings *pacSettings.Settings) map[string]stri
 				continue
 			}
 			config[key] = strconv.FormatInt(element.Int(), 10)
+
 		case reflect.Ptr:
 			if key == "" {
-				data := element.Interface().(*sync.Map)
-				index := 1
-				prefix := "catalog-"
-				data.Range(func(key, value interface{}) bool {
-					catalogData := value.(pacSettings.HubCatalog)
-					if key == "default" {
-						config[pacSettings.HubURLKey] = catalogData.URL
-						config[pacSettings.HubCatalogNameKey] = catalogData.Name
+				catalogData, ok := element.Interface().(*sync.Map)
+				if !ok {
+					continue
+				}
+
+				// collect the keys
+				catalogIDs := []any{}
+				catalogData.Range(func(catalogID, value any) bool {
+					_, ok := value.(pacSettings.HubCatalog)
+					if !ok {
 						return true
 					}
-					config[fmt.Sprintf("%s%d-%s", prefix, index, "id")] = catalogData.ID
-					config[fmt.Sprintf("%s%d-%s", prefix, index, "name")] = catalogData.Name
-					config[fmt.Sprintf("%s%d-%s", prefix, index, "url")] = catalogData.URL
-					index++
+					catalogIDs = append(catalogIDs, catalogID)
 					return true
 				})
+				// sort the keys
+				sort.Slice(catalogIDs, func(i, j int) bool {
+					return fmt.Sprintf("%s", catalogIDs[i]) < fmt.Sprintf("%s", catalogIDs[j])
+				})
+
+				index := uint64(1)
+				for _, catalogID := range catalogIDs {
+					value, ok := catalogData.Load(catalogID)
+					if !ok {
+						continue
+					}
+
+					catalogData := value.(pacSettings.HubCatalog)
+					if catalogID == "default" {
+						config[pacSettings.HubURLKey] = catalogData.URL
+						config[pacSettings.HubCatalogNameKey] = catalogData.Name
+						continue
+					}
+					config[fmt.Sprintf("catalog-%d-id", index)] = catalogData.ID
+					config[fmt.Sprintf("catalog-%d-name", index)] = catalogData.Name
+					config[fmt.Sprintf("catalog-%d-url", index)] = catalogData.URL
+					index++
+				}
 			}
+
 		default:
 			// Skip unsupported field types
 			continue
