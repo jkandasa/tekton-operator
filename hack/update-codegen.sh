@@ -51,6 +51,16 @@ bash ${REPO_ROOT_DIR}/hack/generate-knative.sh "injection" \
   "operator:v1alpha1" \
   --go-header-file ${REPO_ROOT_DIR}/hack/boilerplate/boilerplate.go.txt
 
+OUTPUT_PKG="github.com/tektoncd/operator/pkg/client/injection/kube" \
+VERSIONED_CLIENTSET_PKG="k8s.io/client-go/kubernetes" \
+EXTERNAL_INFORMER_PKG="k8s.io/client-go/informers" \
+  ${REPO_ROOT_DIR}/hack/generate-knative.sh "injection" \
+    k8s.io/client-go \
+    k8s.io/api \
+    "coordination:v1" \
+    --go-header-file ${REPO_ROOT_DIR}/hack/boilerplate/boilerplate.go.txt \
+    --force-genreconciler-kinds "Lease"
+
 GOFLAGS="${OLDGOFLAGS}"
 
 # Make sure our dependencies are up-to-date

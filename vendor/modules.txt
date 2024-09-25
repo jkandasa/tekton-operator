@@ -1358,6 +1358,19 @@ github.com/tektoncd/pipeline/pkg/client/clientset/versioned/scheme
 github.com/tektoncd/pipeline/pkg/client/clientset/versioned/typed/pipeline/v1
 github.com/tektoncd/pipeline/pkg/client/clientset/versioned/typed/pipeline/v1alpha1
 github.com/tektoncd/pipeline/pkg/client/clientset/versioned/typed/pipeline/v1beta1
+github.com/tektoncd/pipeline/pkg/client/informers/externalversions
+github.com/tektoncd/pipeline/pkg/client/informers/externalversions/internalinterfaces
+github.com/tektoncd/pipeline/pkg/client/informers/externalversions/pipeline
+github.com/tektoncd/pipeline/pkg/client/informers/externalversions/pipeline/v1
+github.com/tektoncd/pipeline/pkg/client/informers/externalversions/pipeline/v1alpha1
+github.com/tektoncd/pipeline/pkg/client/informers/externalversions/pipeline/v1beta1
+github.com/tektoncd/pipeline/pkg/client/injection/client
+github.com/tektoncd/pipeline/pkg/client/injection/informers/factory
+github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1/taskrun
+github.com/tektoncd/pipeline/pkg/client/injection/reconciler/pipeline/v1/taskrun
+github.com/tektoncd/pipeline/pkg/client/listers/pipeline/v1
+github.com/tektoncd/pipeline/pkg/client/listers/pipeline/v1alpha1
+github.com/tektoncd/pipeline/pkg/client/listers/pipeline/v1beta1
 github.com/tektoncd/pipeline/pkg/internal/resultref
 github.com/tektoncd/pipeline/pkg/list
 github.com/tektoncd/pipeline/pkg/reconciler/pipeline/dag
@@ -2314,6 +2327,7 @@ knative.dev/pkg/client/injection/kube/informers/admissionregistration/v1/mutatin
 knative.dev/pkg/client/injection/kube/informers/admissionregistration/v1/validatingwebhookconfiguration
 knative.dev/pkg/client/injection/kube/informers/apps/v1/deployment
 knative.dev/pkg/client/injection/kube/informers/apps/v1/statefulset
+knative.dev/pkg/client/injection/kube/informers/coordination/v1/lease
 knative.dev/pkg/client/injection/kube/informers/core/v1/namespace
 knative.dev/pkg/client/injection/kube/informers/core/v1/serviceaccount
 knative.dev/pkg/client/injection/kube/informers/factory
